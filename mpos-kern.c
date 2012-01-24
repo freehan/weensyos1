@@ -76,6 +76,7 @@ start(void)
 	for (i = 0; i < NPROCS; i++) {
 		proc_array[i].p_pid = i;
 		proc_array[i].p_state = P_EMPTY;
+        proc_array[i].wait_pid = -1;        //XIA: initializing waiting pid
 	}
 
 	// The first process has process ID 1.
@@ -181,7 +182,7 @@ interrupt(registers_t *reg)
 		// (In the Unix operating system, only process P's parent
 		// can call sys_wait(P).  In MiniprocOS, we allow ANY
 		// process to call sys_wait(P).)
-
+        /*
 		pid_t p = current->p_registers.reg_eax;
 		if (p <= 0 || p >= NPROCS || p == current->p_pid
 		    || proc_array[p].p_state == P_EMPTY)
@@ -191,6 +192,20 @@ interrupt(registers_t *reg)
 		else
 			current->p_registers.reg_eax = WAIT_TRYAGAIN;
 		schedule();
+         */
+        
+        pid_t p = current->p_registers.reg_eax;
+		if (p <= 0 || p >= NPROCS || p == current->p_pid
+		    || proc_array[p].p_state == P_EMPTY)
+			current->p_registers.reg_eax = -1;
+		else if (proc_array[p].p_state == P_ZOMBIE)
+			current->p_registers.reg_eax = proc_array[p].p_exit_status;
+        else
+        {
+            current->p_state = P_BLOCKED;
+            current->wait_pid = p;
+        }
+        schedule();
 	}
 
 	default:
@@ -255,11 +270,11 @@ do_fork(process_t *parent)
     if(child == -1)
         return -1;
             
-    //initialize process descriptor
-    proc_array[child].p_registers = (*parent).p_registers;
-    copy_stack(&proc_array[child],parent);
-    proc_array[child].p_state = P_RUNNABLE;
-    proc_array[child].p_registers.reg_eax = 0;//混的
+    proc_array[child].p_registers = (*parent).p_registers;  //initialize process descriptor
+    copy_stack(&proc_array[child],parent);          //copy stack 
+    
+    proc_array[child].p_state = P_RUNNABLE;         //initialize process state
+    proc_array[child].p_registers.reg_eax = 0;      //return 0 to child process
     return child;
     
     
@@ -350,5 +365,11 @@ schedule(void)
 		pid = (pid + 1) % NPROCS;
 		if (proc_array[pid].p_state == P_RUNNABLE)
 			run(&proc_array[pid]);
+        else if(proc_array[pid].p_state == P_BLOCKED)   //XIA: the process it is waiting have EXIT
+            if(proc_array[(proc_array[pid].wait_pid)].p_state == P_ZOMBIE)
+            {
+                proc_array[pid].p_registers.reg_eax = proc_array[proc_array[pid].wait_pid].p_exit_status;
+                run(&proc_array[pid]);
+            }
 	}
 }

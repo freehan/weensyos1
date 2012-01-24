@@ -26,9 +26,12 @@ start(void)
 		run_child();
 	else if (p > 0) {
 		app_printf("Main process %d!\n", sys_getpid());
-		do {
+		/*
+        do {
 			status = sys_wait(p);
 		} while (status == WAIT_TRYAGAIN);
+         */
+        status = sys_wait(p);
 		app_printf("Child %d exited with status %d!\n", p, status);
 
 		// Check whether the child process corrupted our stack.
