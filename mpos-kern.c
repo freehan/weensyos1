@@ -390,6 +390,8 @@ schedule(void)
 		cursorpos = console_printf(cursorpos, 0x0700, "proc %d is now empty by schedule\n",proc_array[proc_array[pid].wait_pid]);
 		
 		cursorpos = console_printf(cursorpos, 0x0700, "proc %d is now scheduled\n",pid);
+		proc_array[pid].p_state = P_RUNNABLE;
+		proc_array[pid].wait_pid = -1;
                 run(&proc_array[pid]);
             }
 	}
