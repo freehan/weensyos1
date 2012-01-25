@@ -45,8 +45,11 @@ start(void)
 		// That means we ran out of room to start processes.
 		// Retrieve old processes' exit status with sys_wait(),
 		// to make room for new processes.
-		for (p = 2; p < NPROCS; p++)
+		for (p = 2; p < NPROCS; p++){
+			app_printf("wait started, counter is %d\n",counter);
 			(void) sys_wait(p);
+			app_printf("wait finished, coutner is %d\n",counter);
+		}
 	}
 
 	sys_exit(0);
@@ -63,5 +66,12 @@ run_child(void)
 
 	app_printf("Process %d lives, counter %d!\n",
 		   sys_getpid(), input_counter);
+/*
+	int pid = sys_getpid();
+	if(!(pid&1)){			//even number
+		if(pid!=2)	//cannot kill 1
+		sys_kill(pid-1);
+	}
+*/
 	sys_exit(input_counter);
 }

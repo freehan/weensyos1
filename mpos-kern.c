@@ -182,32 +182,51 @@ interrupt(registers_t *reg)
 		// (In the Unix operating system, only process P's parent
 		// can call sys_wait(P).  In MiniprocOS, we allow ANY
 		// process to call sys_wait(P).)
-        /*
+		/*
 		pid_t p = current->p_registers.reg_eax;
 		if (p <= 0 || p >= NPROCS || p == current->p_pid
 		    || proc_array[p].p_state == P_EMPTY)
 			current->p_registers.reg_eax = -1;
-		else if (proc_array[p].p_state == P_ZOMBIE)
+		else if (proc_array[p].p_state == P_ZOMBIE){
 			current->p_registers.reg_eax = proc_array[p].p_exit_status;
+			proc_array[p].p_state = P_EMPTY;	
+		}
 		else
 			current->p_registers.reg_eax = WAIT_TRYAGAIN;
 		schedule();
-         */
-        
-        pid_t p = current->p_registers.reg_eax;
+        	*/
+		
+        	pid_t p = current->p_registers.reg_eax;
+		cursorpos = console_printf(cursorpos, 0x0700, "proc %d is waited\n",sys_getpid());
 		if (p <= 0 || p >= NPROCS || p == current->p_pid
 		    || proc_array[p].p_state == P_EMPTY)
 			current->p_registers.reg_eax = -1;
-		else if (proc_array[p].p_state == P_ZOMBIE)
-			current->p_registers.reg_eax = proc_array[p].p_exit_status;
-        else
-        {
-            current->p_state = P_BLOCKED;
-            current->wait_pid = p;
-        }
-        schedule();
-	}
-
+		else if (proc_array[p].p_state == P_ZOMBIE){
+			current->p_registers.reg_eax = proc_array[p].p_exit_status;        		
+			proc_array[p].p_state = P_EMPTY;	
+			cursorpos = console_printf(cursorpos, 0x0700, "proc %d is now empty\n",p);
+		}
+		else
+        	{
+        	    current->p_state = P_BLOCKED;
+        	    current->wait_pid = p;
+        	}
+        	schedule();
+	    }
+	case INT_SYS_KILL:{
+		pid_t p = current->p_registers.reg_eax;
+		if (p <= 0 || p >= NPROCS
+		    || proc_array[p].p_state == P_EMPTY)
+			current->p_registers.reg_eax = -1;
+		else if(proc_array[p].p_state != P_ZOMBIE){
+			proc_array[p].p_state = P_ZOMBIE;
+			proc_array[p].p_exit_status = proc_array[p].p_registers.reg_eax;
+			current->p_registers.reg_eax = 1;
+		}
+		else{
+			current->p_registers.reg_eax = 1;
+		}
+	    }
 	default:
 		while (1)
 			/* do nothing */;
@@ -239,7 +258,7 @@ do_fork(process_t *parent)
 {
 	// YOUR CODE HERE!
 	// First, find an empty process descriptor.  If there is no empty
-	//   process descriptor, return -1.  Remember not to use proc_array[0].
+//   process descriptor, return -1.  Remember not to use proc_array[0].
 	// Then, initialize that process descriptor as a running process
 	//   by copying the parent process's registers and stack into the
 	//   child.  Copying the registers is simple: they are stored in the
@@ -276,8 +295,6 @@ do_fork(process_t *parent)
     proc_array[child].p_state = P_RUNNABLE;         //initialize process state
     proc_array[child].p_registers.reg_eax = 0;      //return 0 to child process
     return child;
-    
-    
 }
 
 static void
@@ -369,6 +386,10 @@ schedule(void)
             if(proc_array[(proc_array[pid].wait_pid)].p_state == P_ZOMBIE)
             {
                 proc_array[pid].p_registers.reg_eax = proc_array[proc_array[pid].wait_pid].p_exit_status;
+		proc_array[proc_array[pid].wait_pid].p_state = P_EMPTY; //SK:set the zombie process's status as empty
+		cursorpos = console_printf(cursorpos, 0x0700, "proc %d is now empty by schedule\n",proc_array[proc_array[pid].wait_pid]);
+		
+		cursorpos = console_printf(cursorpos, 0x0700, "proc %d is now scheduled\n",pid);
                 run(&proc_array[pid]);
             }
 	}

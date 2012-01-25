@@ -162,6 +162,27 @@ sys_wait(pid_t pid)
 	return retval;
 }
 
+/*****************************************************************************
+ * sys_kill(pid)
+ *
+ *   Kill another process
+ *   Returns -1 if 'pid' does not exist, or equals the current process's ID.
+ *   
+ *
+ *****************************************************************************/
+
+static inline int
+sys_kill(pid_t pid)
+{
+	int retval;
+	asm volatile("int %1\n"
+		     : "=a" (retval)
+		     : "i" (INT_SYS_KILL),
+		       "a" (pid)
+		     : "cc", "memory");
+	return retval;
+}
+
 
 
 /*****************************************************************************

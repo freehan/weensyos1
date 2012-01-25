@@ -2,6 +2,7 @@
 #define WEENSYOS_MPOS_KERN_H
 #include "mpos.h"
 #include "x86.h"
+#include "mpos-app.h"
 
 // Process state type
 typedef enum procstate {
