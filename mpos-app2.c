@@ -46,9 +46,7 @@ start(void)
 		// Retrieve old processes' exit status with sys_wait(),
 		// to make room for new processes.
 		for (p = 2; p < NPROCS; p++){
-			app_printf("wait started, counter is %d\n",counter);
 			(void) sys_wait(p);
-			app_printf("wait finished, coutner is %d\n",counter);
 		}
 	}
 
