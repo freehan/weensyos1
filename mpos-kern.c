@@ -197,7 +197,6 @@ interrupt(registers_t *reg)
         	*/
 		
         	pid_t p = current->p_registers.reg_eax;
-//		cursorpos = console_printf(cursorpos, 0x0700, "proc %d is waited\n",sys_getpid());
 		if (p <= 0 || p >= NPROCS || p == current->p_pid
 		    || proc_array[p].p_state == P_EMPTY)
 			current->p_registers.reg_eax = -1;
@@ -214,17 +213,18 @@ interrupt(registers_t *reg)
 	    }
 	case INT_SYS_KILL:{
 		pid_t p = current->p_registers.reg_eax;
-		if (p <= 0 || p >= NPROCS
+		if (p <= 0 || p >= NPROCS || p == current->p_pid 
 		    || proc_array[p].p_state == P_EMPTY)
 			current->p_registers.reg_eax = -1;
 		else if(proc_array[p].p_state != P_ZOMBIE){
 			proc_array[p].p_state = P_ZOMBIE;
-			proc_array[p].p_exit_status = proc_array[p].p_registers.reg_eax;
+			proc_array[p].p_exit_status = -1;
 			current->p_registers.reg_eax = 1;
 		}
 		else{
 			current->p_registers.reg_eax = 1;
 		}
+		run(current);
 	    }
 	default:
 		while (1)
@@ -386,10 +386,7 @@ schedule(void)
             if(proc_array[(proc_array[pid].wait_pid)].p_state == P_ZOMBIE)
             {
                 proc_array[pid].p_registers.reg_eax = proc_array[proc_array[pid].wait_pid].p_exit_status;
-	//	proc_array[proc_array[pid].wait_pid].p_state = P_EMPTY; //SK:set the zombie process's status as empty
-//		cursorpos = console_printf(cursorpos, 0x0700, "proc %d is now empty by schedule\n",proc_array[proc_array[pid].wait_pid]);
-		
-//		cursorpos = console_printf(cursorpos, 0x0700, "proc %d is now scheduled\n",pid);
+		proc_array[proc_array[pid].wait_pid].p_state = P_EMPTY; //SK:set the zombie process's status as empty
 		proc_array[pid].p_state = P_RUNNABLE;
 		proc_array[pid].wait_pid = -1;
                 run(&proc_array[pid]);

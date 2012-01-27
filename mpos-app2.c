@@ -9,6 +9,8 @@
  *
  *****************************************************************************/
 
+#define EXTRA
+
 volatile int counter;
 
 void run_child(void);
@@ -61,15 +63,18 @@ run_child(void)
 	counter++;		/* Note that all "processes" share an address
 				   space, so this change to 'counter' will be
 				   visible to all processes. */
-
-	app_printf("Process %d lives, counter %d!\n",
-		   sys_getpid(), input_counter);
-/*
+	#ifdef EXTRA
 	int pid = sys_getpid();
 	if(!(pid&1)){			//even number
-		if(pid!=2)	//cannot kill 1
-		sys_kill(pid-1);
+		int i;
+		for( i = 3; i< NPROCS; i+=2)
+		{
+			int result = sys_kill(i);
+		}
 	}
-*/
+	#endif
+	app_printf("Process %d lives, counter %d!\n",
+		   sys_getpid(), input_counter);
+	
 	sys_exit(input_counter);
 }

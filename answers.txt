@@ -1,16 +1,50 @@
 Name:
 UCLA ID:
+Collaborators: 
 
-Collaborators:
 
 -------------------------------------------------------------------------------
 
 Response to Exercise 1:
+We think it doesn't matter if we change run to schedule, since when the system
+turns into the kernal mode, its registers are stored in its own stack and the
+kernal put the return value (pid) on to the related space in process's
+stack. Even then the system switch to other process, the origin process's
+stack has not been modified. Later, when the origin process get scheduled, the
+system pop the registers' value from stack back to the registers and so we can
+still get the right pid.
 
+One exceptional case is that if the system doesn't provide process memory
+isolation (mainly by virtual address), which is the case in weensyos, one process could still access to another process's memory. Then it's possible for another process to modify origin process's stack. In this case getpid in scheduling case will get the wrong answer.
 
 
 Anything else you'd like us to know:
 
 
+#4 
+the main problem that cause the bug is that in current code, it will never
+"terminate" a exited process even if the process waiting for it has get the
+return value. 
+
+So, as defined that one process can only be waited by one other process, as if
+one process gets the return value, it will now terminate the zombie process by
+setting the status from zombie to empty. So that later on the process's
+resource could be utlized again.
 
 Extra credit exercises:
+
+#7 
+Here's the assumption I've made:
+1. one process cannot commit suicide 
+2. if one process is killed by other, than it's exit value will be set as -1,
+as it's an unexpected exit.
+
+So, in the implementation of system call kill, the kernel will now change the
+target process's status to zombie and set the exit status value as -1. If the
+process has already been zombie, then the exit status value will not be
+changed.
+
+And in app2, I change the code that now if a process with even number pid is
+created, it will attempt to kill all odd number processes.
+
+
