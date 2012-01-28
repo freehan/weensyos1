@@ -198,7 +198,6 @@ interrupt(registers_t *reg)
         	*/
 		
         	pid_t p = current->p_registers.reg_eax;
-//		cursorpos = console_printf(cursorpos, 0x0700, "proc %d is waited\n",sys_getpid());
 		if (p <= 0 || p >= NPROCS || p == current->p_pid
 		    || proc_array[p].p_state == P_EMPTY)
 			current->p_registers.reg_eax = -1;
@@ -216,17 +215,19 @@ interrupt(registers_t *reg)
             
 	case INT_SYS_KILL:{
 		pid_t p = current->p_registers.reg_eax;
-		if (p <= 0 || p >= NPROCS
+		if (p <= 0 || p >= NPROCS || p == current->p_pid 
 		    || proc_array[p].p_state == P_EMPTY)
 			current->p_registers.reg_eax = -1;
 		else if(proc_array[p].p_state != P_ZOMBIE){
 			proc_array[p].p_state = P_ZOMBIE;
-			proc_array[p].p_exit_status = proc_array[p].p_registers.reg_eax;
+			proc_array[p].p_exit_status = -1;
 			current->p_registers.reg_eax = 1;
 		}
 		else{
 			current->p_registers.reg_eax = 1;
 		}
+        run(current);
+
     }
             //XIA: new thread
     case INT_SYS_NEWTHREAD:{
@@ -236,9 +237,13 @@ interrupt(registers_t *reg)
         pid_t new = do_newthread(f);
         current->p_registers.reg_eax = new;
         cursorpos = console_printf(cursorpos, 0x0700, "new Thread in kernel\n");
-        //schedule();
+        //schedule();//havenot succeed yet
     }
             
+
+		
+    
+
 	default:
 		while (1)
 			/* do nothing */;
