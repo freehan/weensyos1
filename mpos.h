@@ -11,6 +11,7 @@
 #define INT_SYS_EXIT		51
 #define INT_SYS_WAIT		52
 #define INT_SYS_KILL		53
+#define INT_SYS_NEWTHREAD	54
 
 // These system call numbers currently do nothing; feel free to define them
 // as you like.

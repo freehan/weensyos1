@@ -184,6 +184,29 @@ sys_kill(pid_t pid)
 }
 
 
+//XIA: sys_newthread
+/*****************************************************************************
+ * sys_newthread(void (*start_function)(void));
+ *
+ *   Creat another another thread to excute start_function
+ *   Returns -1 if it did not succeed
+ *   Returns pid of the new process to parent process
+ *   Returns 0 to the new thread
+ *****************************************************************************/
+
+static inline pid_t
+sys_newthread(void (*start_function)(void))
+{
+	pid_t pid;
+	asm volatile("int %1\n"
+                 : "=a" (pid)
+                 : "i" (INT_SYS_NEWTHREAD),
+                 "a" (start_function)
+                 : "cc", "memory");
+	return pid;
+}
+
+
 
 /*****************************************************************************
  * app_printf(format, ...)

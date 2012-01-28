@@ -126,6 +126,7 @@ start(void)
  *****************************************************************************/
 
 static pid_t do_fork(process_t *parent);
+static pid_t do_newthread(void (*start_function)(void));
 
 void
 interrupt(registers_t *reg)
@@ -212,6 +213,7 @@ interrupt(registers_t *reg)
         	}
         	schedule();
 	    }
+            
 	case INT_SYS_KILL:{
 		pid_t p = current->p_registers.reg_eax;
 		if (p <= 0 || p >= NPROCS
@@ -225,7 +227,18 @@ interrupt(registers_t *reg)
 		else{
 			current->p_registers.reg_eax = 1;
 		}
-	    }
+    }
+            //XIA: new thread
+    case INT_SYS_NEWTHREAD:{
+        cursorpos = console_printf(cursorpos, 0x0700, "new Thread in kernel\n");
+        
+        void (*f)(void) = (void(*)(void)) current->p_registers.reg_eax;
+        pid_t new = do_newthread(f);
+        current->p_registers.reg_eax = new;
+        cursorpos = console_printf(cursorpos, 0x0700, "new Thread in kernel\n");
+        //schedule();
+    }
+            
 	default:
 		while (1)
 			/* do nothing */;
@@ -249,6 +262,35 @@ interrupt(registers_t *reg)
  *   Your job is to fill it in!
  *
  *****************************************************************************/
+
+
+//XIA: new thread
+static pid_t 
+do_newthread(void (*start_function)(void))
+{
+    pid_t new = -1;
+    int i = 1;
+    while(i < NPROCS)
+    {
+        if(proc_array[i].p_state == P_EMPTY)
+        {    
+            new = i;
+            break;
+        }
+        i++;
+    }
+    if(new == -1)
+        return -1;
+    
+    //program_loader(2,&proc_array[new].p_registers.reg_eip); //fail: make the instruction pointer point to the function
+    //fail to load the program   // don't have solution yet
+
+    proc_array[new].p_registers.reg_esp = PROC1_STACK_ADDR + new * PROC_STACK_SIZE;
+    proc_array[new].p_state = P_RUNNABLE; 
+    
+    return new;
+}
+
 
 static void copy_stack(process_t *dest, process_t *src);
 
@@ -390,8 +432,8 @@ schedule(void)
 //		cursorpos = console_printf(cursorpos, 0x0700, "proc %d is now empty by schedule\n",proc_array[proc_array[pid].wait_pid]);
 		
 //		cursorpos = console_printf(cursorpos, 0x0700, "proc %d is now scheduled\n",pid);
-		proc_array[pid].p_state = P_RUNNABLE;
-		proc_array[pid].wait_pid = -1;
+                proc_array[pid].p_state = P_RUNNABLE;
+                proc_array[pid].wait_pid = -1;
                 run(&proc_array[pid]);
             }
         }

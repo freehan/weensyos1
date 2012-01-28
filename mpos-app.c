@@ -10,6 +10,7 @@
  *****************************************************************************/
 
 void run_child(void);
+void newThread(void);//XIA: new thread
 
 void
 start(void)
@@ -27,12 +28,21 @@ start(void)
 	else if (p > 0) {
 		app_printf("Main process %d!\n", sys_getpid());
 		
+        
         do {
 			status = sys_wait(p);
 			app_printf("W");
 		} while (status == WAIT_TRYAGAIN);
+        
+        //XIA: new thread
+        /*
+        app_printf("new thread\n");
+        pid_t new;
+        app_printf("newThread address: %d",newThread);
+        new = sys_newthread((void(*)(void))newThread);
+        */
          
-        status = sys_wait(p);
+        //status = sys_wait(p);               
 		app_printf("Child %d exited with status %d!\n", p, status);
 
 		// Check whether the child process corrupted our stack.
@@ -65,4 +75,11 @@ run_child(void)
 		sys_yield();
 
 	sys_exit(1000);
+}
+
+// XIA: new thread
+void newThread()
+{
+    app_printf("newThread pid = %d\n",sys_getpid());
+    sys_yield();
 }
