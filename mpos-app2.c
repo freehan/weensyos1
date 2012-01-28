@@ -63,7 +63,7 @@ run_child(void)
 	counter++;		/* Note that all "processes" share an address
 				   space, so this change to 'counter' will be
 				   visible to all processes. */
-	#ifdef EXTRA
+#ifdef EXTRA
 	int pid = sys_getpid();
 	if(!(pid&1)){			//even number
 		int i;
@@ -72,7 +72,7 @@ run_child(void)
 			int result = sys_kill(i);
 		}
 	}
-	#endif
+#endif
 	app_printf("Process %d lives, counter %d!\n",
 		   sys_getpid(), input_counter);
 	

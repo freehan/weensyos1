@@ -8,6 +8,7 @@
  *   to exit.  Both processes print messages to the screen.
  *
  *****************************************************************************/
+#define EXTRA6
 
 void run_child(void);
 void newThread(void);//XIA: new thread
@@ -35,12 +36,12 @@ start(void)
 		} while (status == WAIT_TRYAGAIN);
         
         //XIA: new thread
-        /*
-        app_printf("new thread\n");
+#ifdef EXTRA6
+        //app_printf("new thread\n");
         pid_t new;
-        app_printf("newThread address: %d",newThread);
-        new = sys_newthread((void(*)(void))newThread);
-        */
+        //app_printf("newThread address: %d",&newThread);
+        new = sys_newthread(&newThread);
+#endif
          
         //status = sys_wait(p);               
 		app_printf("Child %d exited with status %d!\n", p, status);

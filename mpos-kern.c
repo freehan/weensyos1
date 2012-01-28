@@ -126,7 +126,7 @@ start(void)
  *****************************************************************************/
 
 static pid_t do_fork(process_t *parent);
-static pid_t do_newthread(void (*start_function)(void));
+static pid_t do_newthread(void (*start_function)(void),process_t *parent);
 
 void
 interrupt(registers_t *reg)
@@ -231,12 +231,14 @@ interrupt(registers_t *reg)
     }
             //XIA: new thread
     case INT_SYS_NEWTHREAD:{
-        cursorpos = console_printf(cursorpos, 0x0700, "new Thread in kernel\n");
+//        cursorpos = console_printf(cursorpos, 0x0700, "new Thread in kernel\n");
         
         void (*f)(void) = (void(*)(void)) current->p_registers.reg_eax;
-        pid_t new = do_newthread(f);
+        pid_t new = do_newthread(f,current);
         current->p_registers.reg_eax = new;
-        cursorpos = console_printf(cursorpos, 0x0700, "new Thread in kernel\n");
+        
+//        cursorpos = console_printf(cursorpos, 0x0700, "new Thread in kernel\n");
+        run(current);
         //schedule();//havenot succeed yet
     }
             
@@ -271,7 +273,7 @@ interrupt(registers_t *reg)
 
 //XIA: new thread
 static pid_t 
-do_newthread(void (*start_function)(void))
+do_newthread(void (*start_function)(void),process_t *parent)
 {
     pid_t new = -1;
     int i = 1;
@@ -287,9 +289,10 @@ do_newthread(void (*start_function)(void))
     if(new == -1)
         return -1;
     
-    //program_loader(2,&proc_array[new].p_registers.reg_eip); //fail: make the instruction pointer point to the function
-    //fail to load the program   // don't have solution yet
-
+    //proc_array[new].p_registers = (*parent).p_registers; 
+    special_registers_init(&proc_array[new]);
+    //fail to load the program   don't have solution yet
+    proc_array[new].p_registers.reg_eip = (int)start_function;//this line needs modification
     proc_array[new].p_registers.reg_esp = PROC1_STACK_ADDR + new * PROC_STACK_SIZE;
     proc_array[new].p_state = P_RUNNABLE; 
     

@@ -79,7 +79,7 @@ run_child(void)
   200054:	cd 30                	int    $0x30
 				   space, so this change to 'counter' will be
 				   visible to all processes. */
-	#ifdef EXTRA
+#ifdef EXTRA
 	int pid = sys_getpid();
 	if(!(pid&1)){			//even number
   200056:	a8 01                	test   $0x1,%al
@@ -109,7 +109,7 @@ sys_kill(pid_t pid)
 			int result = sys_kill(i);
 		}
 	}
-	#endif
+#endif
 	app_printf("Process %d lives, counter %d!\n",
   20006d:	52                   	push   %edx
   20006e:	53                   	push   %ebx
